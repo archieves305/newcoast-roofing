@@ -6,6 +6,7 @@ interface PageSEO {
   description: string
   path: string
   ogTitle?: string
+  noindex?: boolean
 }
 
 export function generatePageMetadata({
@@ -13,6 +14,7 @@ export function generatePageMetadata({
   description,
   path,
   ogTitle,
+  noindex = false,
 }: PageSEO): Metadata {
   const fullTitle =
     title === siteConfig.name
@@ -39,5 +41,8 @@ export function generatePageMetadata({
     alternates: {
       canonical: url,
     },
+    ...(noindex
+      ? { robots: { index: false, follow: false } }
+      : {}),
   }
 }

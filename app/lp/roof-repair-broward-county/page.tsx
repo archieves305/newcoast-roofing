@@ -8,6 +8,7 @@ export const metadata: Metadata = generatePageMetadata({
   description:
     'Professional roof repair in Broward County FL. Leak repair, storm damage, and emergency service. Free estimates and financing. Call NewCoast Roofing today.',
   path: '/lp/roof-repair-broward-county',
+  noindex: true,
 })
 
 export default function RoofRepairBrowardLP() {

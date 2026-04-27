@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getTrackingParams } from '@/lib/tracking'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { getTrackingParams, trackEvent } from '@/lib/tracking'
 import { siteConfig } from '@/content/site'
 
 interface EstimateFormProps {
@@ -35,47 +37,60 @@ export default function EstimateForm({
   compact = false,
   className = '',
 }: EstimateFormProps) {
-  const [submitted, setSubmitted] = useState(false)
+  const router = useRouter()
+  const [submitting, setSubmitting] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [tracking, setTracking] = useState<Record<string, string>>({})
 
   useEffect(() => {
     setTracking(getTrackingParams())
   }, [])
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    if (submitting) return
 
-    // PLACEHOLDER — wire to your form endpoint (e.g., API route, Zapier, CRM)
-    // The form data + hidden tracking fields should be sent to your backend
+    setErrorMsg(null)
+    setSubmitting(true)
 
-    // Fire conversion tracking
-    // trackConversion(GOOGLE_ADS_ESTIMATE_LABEL)
+    const formEl = e.currentTarget
+    const data = new FormData(formEl)
+    const payload: Record<string, string | boolean> = {}
+    data.forEach((value, key) => {
+      payload[key] = typeof value === 'string' ? value : ''
+    })
+    payload.sms_consent = (data.get('sms_consent') as string) === 'on'
 
-    setSubmitted(true)
-  }
+    try {
+      const res = await fetch('/api/lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
 
-  if (submitted) {
-    return (
-      <div className={`rounded-xl bg-white p-8 text-center shadow-lg ${className}`}>
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-          <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-          </svg>
-        </div>
-        <h3 className="text-2xl font-bold text-navy">Thank You!</h3>
-        <p className="mt-2 text-slate">
-          Your estimate request has been received. A member of our team will
-          reach out within one business day to confirm your details and schedule
-          your assessment.
-        </p>
-        <p className="mt-4 text-sm text-slate/70">
-          Need immediate assistance? Call us at{' '}
-          <a href={`tel:${siteConfig.phoneRaw}`} className="font-semibold text-coastal">
-            {siteConfig.phone}
-          </a>
-        </p>
-      </div>
-    )
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error || 'Submission failed.')
+      }
+
+      trackEvent('generate_lead', {
+        form_source: source,
+        service: String(payload.service || ''),
+      })
+
+      const params = new URLSearchParams({
+        source,
+        service: String(payload.service || ''),
+      })
+      router.push(`/thank-you?${params.toString()}`)
+    } catch (err) {
+      setSubmitting(false)
+      setErrorMsg(
+        err instanceof Error
+          ? err.message
+          : 'Something went wrong. Please call us directly.'
+      )
+    }
   }
 
   return (
@@ -97,6 +112,7 @@ export default function EstimateForm({
             id="name"
             name="name"
             required
+            autoComplete="name"
             className="w-full rounded-lg border border-gray-300 px-4 py-3 text-charcoal placeholder-gray-400 focus:border-coastal focus:ring-2 focus:ring-coastal/20 focus:outline-none"
             placeholder="Your full name"
           />
@@ -111,6 +127,7 @@ export default function EstimateForm({
             id="phone"
             name="phone"
             required
+            autoComplete="tel"
             className="w-full rounded-lg border border-gray-300 px-4 py-3 text-charcoal placeholder-gray-400 focus:border-coastal focus:ring-2 focus:ring-coastal/20 focus:outline-none"
             placeholder="(555) 555-5555"
           />
@@ -125,6 +142,7 @@ export default function EstimateForm({
             id="email"
             name="email"
             required
+            autoComplete="email"
             className="w-full rounded-lg border border-gray-300 px-4 py-3 text-charcoal placeholder-gray-400 focus:border-coastal focus:ring-2 focus:ring-coastal/20 focus:outline-none"
             placeholder="you@email.com"
           />
@@ -138,6 +156,7 @@ export default function EstimateForm({
             type="text"
             id="address"
             name="address"
+            autoComplete="street-address"
             className="w-full rounded-lg border border-gray-300 px-4 py-3 text-charcoal placeholder-gray-400 focus:border-coastal focus:ring-2 focus:ring-coastal/20 focus:outline-none"
             placeholder="123 Main St"
           />
@@ -151,6 +170,7 @@ export default function EstimateForm({
             type="text"
             id="zip"
             name="zip"
+            autoComplete="postal-code"
             className="w-full rounded-lg border border-gray-300 px-4 py-3 text-charcoal placeholder-gray-400 focus:border-coastal focus:ring-2 focus:ring-coastal/20 focus:outline-none"
             placeholder="33301"
           />
@@ -225,6 +245,40 @@ export default function EstimateForm({
         </div>
       </div>
 
+      {/* SMS consent — required for Telnyx 10DLC compliance */}
+      <label className="mt-5 flex items-start gap-2 text-xs text-slate cursor-pointer">
+        <input
+          type="checkbox"
+          name="sms_consent"
+          className="mt-0.5 h-4 w-4 rounded border-gray-300 text-coastal focus:ring-coastal"
+        />
+        <span>
+          I agree to receive text messages from NewCoast Roofing about my
+          estimate and project. Message and data rates may apply. Message
+          frequency varies. Reply STOP to unsubscribe, HELP for help. See our{' '}
+          <Link href="/sms-policy" className="text-coastal underline">
+            SMS Policy
+          </Link>{' '}
+          and{' '}
+          <Link href="/privacy" className="text-coastal underline">
+            Privacy Policy
+          </Link>
+          .
+        </span>
+      </label>
+
+      {/* Honeypot — hidden from real users, picked up by bots */}
+      <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+        <label htmlFor="company">Company (leave blank)</label>
+        <input
+          type="text"
+          id="company"
+          name="company"
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
       {/* Hidden tracking fields */}
       <input type="hidden" name="utm_source" value={tracking.utm_source || ''} />
       <input type="hidden" name="utm_medium" value={tracking.utm_medium || ''} />
@@ -236,13 +290,22 @@ export default function EstimateForm({
       <input type="hidden" name="referrer" value={tracking.referrer || ''} />
       <input type="hidden" name="form_source" value={source} />
 
-      {/* PLACEHOLDER — add SMS consent checkbox if needed */}
+      {errorMsg && (
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {errorMsg} Or call us at{' '}
+          <a href={`tel:${siteConfig.phoneRaw}`} className="font-semibold underline">
+            {siteConfig.phone}
+          </a>
+          .
+        </p>
+      )}
 
       <button
         type="submit"
-        className="mt-6 w-full rounded-lg bg-amber px-6 py-4 text-lg font-bold text-white shadow-lg shadow-amber/20 transition-all hover:bg-amber-dark hover:shadow-xl"
+        disabled={submitting}
+        className="mt-6 w-full rounded-lg bg-amber px-6 py-4 text-lg font-bold text-white shadow-lg shadow-amber/20 transition-all hover:bg-amber-dark hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
       >
-        Get My Free Estimate
+        {submitting ? 'Sending…' : 'Get My Free Estimate'}
       </button>
 
       <p className="mt-3 text-center text-xs text-gray-400">

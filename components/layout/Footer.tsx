@@ -181,10 +181,19 @@ export default function Footer() {
             <p className="text-sm text-white/40">
               &copy; {new Date().getFullYear()} {siteConfig.name}. All rights reserved.
             </p>
-            <div className="flex gap-6 text-sm text-white/40">
-              {/* PLACEHOLDER — add privacy policy and terms pages when ready */}
-              <span>Privacy Policy</span>
-              <span>Terms of Service</span>
+            <div className="flex flex-wrap gap-6 text-sm text-white/50">
+              <Link
+                href="/privacy"
+                className="hover:text-white transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <Link
+                href="/sms-policy"
+                className="hover:text-white transition-colors"
+              >
+                SMS Policy
+              </Link>
             </div>
           </div>
         </div>

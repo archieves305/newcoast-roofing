@@ -18,6 +18,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/projects',
     '/faq',
     '/contact',
+    '/privacy',
+    '/sms-policy',
   ]
 
   const areaPages = serviceAreas.map(
