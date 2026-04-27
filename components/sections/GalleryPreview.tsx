@@ -1,38 +1,44 @@
+import Image from 'next/image'
 import Container from '@/components/ui/Container'
 import SectionHeading from '@/components/ui/SectionHeading'
 import Button from '@/components/ui/Button'
 
-// PLACEHOLDER — replace with actual project images
 const projects = [
   {
     title: 'Shingle Roof Replacement',
     location: 'Fort Lauderdale, FL',
     category: 'Roofing',
+    image: '/images/project-shingle-roof.jpg',
   },
   {
     title: 'Impact Window Installation',
     location: 'Boca Raton, FL',
     category: 'Windows',
-  },
-  {
-    title: 'Tile Roof Restoration',
-    location: 'West Palm Beach, FL',
-    category: 'Roofing',
-  },
-  {
-    title: 'Impact Entry Door Upgrade',
-    location: 'Coral Springs, FL',
-    category: 'Doors',
+    image: '/images/project-impact-window.jpg',
   },
   {
     title: 'Metal Roof Installation',
     location: 'Port St. Lucie, FL',
     category: 'Roofing',
+    image: '/images/project-metal-roof.jpg',
+  },
+  {
+    title: 'Sliding Glass Door Project',
+    location: 'Coral Springs, FL',
+    category: 'Doors',
+    image: '/images/project-modern-glass.jpg',
+  },
+  {
+    title: 'Coastal Home Re-Roof',
+    location: 'Pompano Beach, FL',
+    category: 'Roofing',
+    image: '/images/project-coastal-home.jpg',
   },
   {
     title: 'Whole-Home Window Replacement',
     location: 'Weston, FL',
     category: 'Windows',
+    image: '/images/project-modern-pool.jpg',
   },
 ]
 
@@ -45,16 +51,19 @@ export default function GalleryPreview() {
           subtitle="Browse recent roofing, window, and door projects across South Florida"
         />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project, i) => (
+          {projects.map((project) => (
             <div
-              key={i}
-              className="group overflow-hidden rounded-xl border border-gray-100 shadow-sm"
+              key={project.title}
+              className="group overflow-hidden rounded-xl border border-gray-100 shadow-sm transition-shadow hover:shadow-md"
             >
-              {/* PLACEHOLDER — replace with actual project images */}
-              <div className="aspect-[4/3] bg-gray-200 flex items-center justify-center">
-                <span className="text-sm text-gray-400">
-                  Project Photo
-                </span>
+              <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+                <Image
+                  src={project.image}
+                  alt={`${project.title} in ${project.location}`}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
               </div>
               <div className="p-5">
                 <span className="text-xs font-semibold uppercase tracking-wider text-coastal">

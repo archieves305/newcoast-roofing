@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Button from '@/components/ui/Button'
 import Container from '@/components/ui/Container'
 import { siteConfig } from '@/content/site'
@@ -10,7 +11,7 @@ interface HeroProps {
   cta2Text?: string
   cta2Href?: string
   showFinancing?: boolean
-  bgImage?: boolean
+  bgImage?: string
 }
 
 export default function Hero({
@@ -21,14 +22,21 @@ export default function Hero({
   cta2Text = 'Call Now',
   cta2Href = `tel:${siteConfig.phoneRaw}`,
   showFinancing = true,
+  bgImage = '/images/hero-home.jpg',
 }: HeroProps) {
   return (
     <section className="relative overflow-hidden bg-navy">
-      {/* Background gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-navy via-navy-light to-navy opacity-90" />
-
-      {/* PLACEHOLDER — add hero background image */}
-      {/* <Image src="/images/hero-bg.jpg" alt="" fill className="object-cover opacity-20" /> */}
+      {bgImage && (
+        <Image
+          src={bgImage}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-30"
+        />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-br from-navy/90 via-navy-light/85 to-navy/90" />
 
       <Container className="relative z-10">
         <div className="py-16 sm:py-20 lg:py-28">
